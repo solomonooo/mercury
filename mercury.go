@@ -7,6 +7,7 @@ package mercury
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -28,6 +29,7 @@ var (
 
 func init() {
 	//set gp
+	flag.Parse()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	//init config
