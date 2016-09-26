@@ -22,11 +22,7 @@ func FileExists(name string) bool {
 }
 
 func RecvReq(conn net.Conn, data []byte) (int, error) {
-<<<<<<< HEAD
 	timeout := time.Duration(uint64(mercury.config.RecvTimeout) * 1000 * 1000)
-=======
-	timeout := time.Duration(mercury.config.RecvTimeout * 1000 * 1000)
->>>>>>> origin/master
 	conn.SetReadDeadline(time.Now().Add(timeout))
 	ret, err := conn.Read(data)
 	if err == io.EOF {
@@ -42,11 +38,7 @@ func RecvReq(conn net.Conn, data []byte) (int, error) {
 }
 
 func SendRsp(conn net.Conn, reqid uint64, data []byte) (int, error) {
-<<<<<<< HEAD
 	timeout := time.Duration(uint64(mercury.config.SendTimeout) * 1000 * 1000)
-=======
-	timeout := time.Duration(mercury.config.SendTimeout * 1000 * 1000)
->>>>>>> origin/master
 	conn.SetWriteDeadline(time.Now().Add(timeout))
 	ret, err := conn.Write(data)
 	if err != nil {
