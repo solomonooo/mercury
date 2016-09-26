@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DEFAULT_STATUS_CYCLE = 30 * 1000
+	DEFAULT_STATUS_CYCLE = 10 * 60 * 1000
 )
 
 type Timer interface {

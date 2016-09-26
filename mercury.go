@@ -13,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
+	"syscall"
 	"time"
 )
 
@@ -44,7 +46,7 @@ func init() {
 	if !FileExists(configFilePath) {
 		configFilePath = filepath.Join(workPath, "conf", CONFIG_FILE)
 		if !FileExists(configFilePath) {
-			return
+			panic("can't find mercury.conf")
 		}
 	}
 	err = mercury.config.Init(configFilePath)
@@ -55,6 +57,9 @@ func init() {
 	//init log
 	setLogDir(mercury.config.LogDir)
 	setLogLevel(mercury.config.LogLevel)
+
+	//init stderr output
+	stdErr2File()
 
 	//init workers
 	mercury.workers = make(map[string]Worker)
@@ -188,5 +193,20 @@ func (mercury *Mercury) handleConn(conn net.Conn) error {
 		} else {
 			needRecv = true
 		}
+	}
+}
+
+func stdErr2File() {
+	procName := os.Args[0]
+	procName = procName[strings.LastIndex(procName, "/")+1:]
+	filePath := fmt.Sprintf("%s/%s_%d_%d.err", mercury.config.LogDir, procName, os.Getpid(), time.Now().Unix())
+	f, err := os.Create(filePath)
+	if err != nil {
+		Error("create error file failed, file[%s]", filePath)
+		return
+	}
+	err = syscall.Dup2(int(f.Fd()), 2)
+	if err != nil {
+		Error("dup2 stderr to file failed, file[%s], err[%s]", filePath, err.Error())
 	}
 }
