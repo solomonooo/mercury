@@ -67,10 +67,6 @@ func init() {
 	mercury.timers = make(map[string]Timer)
 }
 
-func RegisterRouter() error {
-	return nil
-}
-
 func Init() error {
 	SetRouter(&DefaultRouter{})
 	RegisterTimer("status", StatusTimer{})
@@ -82,7 +78,7 @@ func Run() error {
 	for name, timer := range mercury.timers {
 		Info("start timer : %s", name)
 		go func(t Timer) {
-			cycle := time.Duration(t.GetCycle() * 1000 * 1000)
+			cycle := time.Duration(uint64(t.GetCycle()) * 1000 * 1000)
 			ticker := time.NewTicker(cycle)
 			for _ = range ticker.C {
 				err := t.Process()
@@ -101,6 +97,9 @@ func Run() error {
 	}
 	defer listener.Close()
 
+	//check multi eth
+	mercury.multiEth()
+
 	Info("mercury run...")
 	//
 	for {
@@ -111,6 +110,47 @@ func Run() error {
 		}
 		Debug("new conn[%s]", conn.RemoteAddr().String())
 		go mercury.handleConn(conn)
+	}
+
+	return nil
+}
+
+func (mercury *Mercury) multiEth() error {
+	enableMultiEth, _ := mercury.config.GetInt32("server", "multi_eth")
+	if enableMultiEth == 0 {
+		return nil
+	}
+
+	//
+	idx := 0
+	for {
+		server := fmt.Sprintf("server%d_", idx)
+		ip, _ := mercury.config.Get("multi_eth", server+"ip")
+		port, _ := mercury.config.GetUInt32("multi_eth", server+"port")
+		if ip == "" || port == 0 {
+			break
+		}
+
+		Debug("one eth info, ip[%s], port[%d]", ip, port)
+		tcpAddr := fmt.Sprintf("%s:%d", mercury.config.Ip, mercury.config.Port)
+		listener, err := net.Listen("tcp", tcpAddr)
+		if err != nil {
+			Error("mercury listen failed, addr:%s, err:%s", tcpAddr, err.Error())
+			break
+		}
+		go func() {
+			defer listener.Close()
+			for {
+				conn, err := listener.Accept()
+				if err != nil {
+					Warn("mercury accept failed, err:%s", err.Error())
+					continue
+				}
+				Debug("new conn[%s]", conn.RemoteAddr().String())
+				go mercury.handleConn(conn)
+			}
+		}()
+		idx++
 	}
 
 	return nil
@@ -145,6 +185,9 @@ func (mercury *Mercury) handleConn(conn net.Conn) error {
 		if err != nil {
 			Warn("request route failed")
 			return err
+		} else if workerName == "" {
+			needRecv = true
+			continue
 		} else if _, ok := mercury.workers[workerName]; false == ok {
 			Warn("invalid worker name[%s]", workerName)
 			return ERR_INVALID_WORKER
