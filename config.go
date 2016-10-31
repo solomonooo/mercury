@@ -21,6 +21,8 @@ const (
 	DEFAULT_RECV_BUFF_SIZE = 32 * 1024
 	DEFAULT_RECV_TIMEOUT   = 1000
 	DEFAULT_SEND_TIMEOUT   = 1000
+
+	DEFAULT_STDERR_2_FILE = false
 )
 
 type MercuryConfig struct {
@@ -32,6 +34,8 @@ type MercuryConfig struct {
 	RecvBuffSize uint32
 	RecvTimeout  uint32
 	SendTimeout  uint32
+
+	StdErr2File bool
 
 	StatusCycle uint32
 
@@ -48,6 +52,7 @@ func NewConfig() *MercuryConfig {
 		RecvTimeout:  DEFAULT_RECV_TIMEOUT,
 		SendTimeout:  DEFAULT_SEND_TIMEOUT,
 		StatusCycle:  DEFAULT_STATUS_CYCLE,
+		StdErr2File:  DEFAULT_STDERR_2_FILE,
 	}
 }
 
@@ -81,6 +86,9 @@ func (config *MercuryConfig) Init(configPath string) error {
 	}
 	if config.Find("server", "status_cycle") {
 		config.StatusCycle, _ = config.GetUInt32("server", "status_cycle")
+	}
+	if config.Find("server", "stderr2file") {
+		config.StdErr2File, _ = config.GetBool("server", "stderr2file")
 	}
 
 	return nil
@@ -179,6 +187,14 @@ func (config MercuryConfig) GetInt(section string, name string) (int, error) {
 	return int(v), err
 }
 
+func (config MercuryConfig) GetBool(section string, name string) (bool, error) {
+	str, err := config.Get(section, name)
+	if err != nil {
+		return false, err
+	}
+	return strconv.ParseBool(str)
+}
+
 //////////////////////
 func SetConfig(configPath string) error {
 	err := mercury.config.Init(configPath)
@@ -202,4 +218,8 @@ func GetConfigUInt32(section string, name string) (uint32, error) {
 
 func GetConfigInt(section string, name string) (int, error) {
 	return mercury.config.GetInt(section, name)
+}
+
+func GetConfigBool(section string, name string) (bool, error) {
+	return mercury.config.GetBool(section, name)
 }

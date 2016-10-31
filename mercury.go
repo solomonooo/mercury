@@ -59,7 +59,9 @@ func init() {
 	setLogLevel(mercury.config.LogLevel)
 
 	//init stderr output
-	stdErr2File()
+	if mercury.config.StdErr2File {
+		stdErr2File()
+	}
 
 	//init workers
 	mercury.workers = make(map[string]Worker)
