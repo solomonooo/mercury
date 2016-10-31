@@ -15,7 +15,7 @@ import (
 
 const (
 	CONFIG_FILE         = "mercury.conf"
-	DEFAULT_LISTEN_IP   = "127.0.0.1"
+	DEFAULT_LISTEN_IP   = "0.0.0.0"
 	DEFAULT_LISTEN_PORT = 7531
 
 	DEFAULT_RECV_BUFF_SIZE = 32 * 1024

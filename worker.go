@@ -10,7 +10,7 @@ import (
 )
 
 type Worker interface {
-	//
+	//check data complete. > 0, read pack size; = 0, pack incomplete; <0, data error
 	Complete(buf []byte) (int, error)
 	Receive(buf []byte) (Msg, error)
 	Process(conn net.Conn, msg Msg) error

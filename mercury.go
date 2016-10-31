@@ -97,9 +97,6 @@ func Run() error {
 	}
 	defer listener.Close()
 
-	//check multi eth
-	mercury.multiEth()
-
 	Info("mercury run...")
 	//
 	for {
@@ -110,47 +107,6 @@ func Run() error {
 		}
 		Debug("new conn[%s]", conn.RemoteAddr().String())
 		go mercury.handleConn(conn)
-	}
-
-	return nil
-}
-
-func (mercury *Mercury) multiEth() error {
-	enableMultiEth, _ := mercury.config.GetInt32("server", "multi_eth")
-	if enableMultiEth == 0 {
-		return nil
-	}
-
-	//
-	idx := 0
-	for {
-		server := fmt.Sprintf("server%d_", idx)
-		ip, _ := mercury.config.Get("multi_eth", server+"ip")
-		port, _ := mercury.config.GetUInt32("multi_eth", server+"port")
-		if ip == "" || port == 0 {
-			break
-		}
-
-		Debug("one eth info, ip[%s], port[%d]", ip, port)
-		tcpAddr := fmt.Sprintf("%s:%d", mercury.config.Ip, mercury.config.Port)
-		listener, err := net.Listen("tcp", tcpAddr)
-		if err != nil {
-			Error("mercury listen failed, addr:%s, err:%s", tcpAddr, err.Error())
-			break
-		}
-		go func() {
-			defer listener.Close()
-			for {
-				conn, err := listener.Accept()
-				if err != nil {
-					Warn("mercury accept failed, err:%s", err.Error())
-					continue
-				}
-				Debug("new conn[%s]", conn.RemoteAddr().String())
-				go mercury.handleConn(conn)
-			}
-		}()
-		idx++
 	}
 
 	return nil
@@ -168,6 +124,7 @@ func (mercury *Mercury) handleConn(conn net.Conn) error {
 	needRecv := true
 	var ret int
 	var err error
+	var ready bool
 	var workerName string
 	for {
 		if needRecv {
@@ -181,6 +138,15 @@ func (mercury *Mercury) handleConn(conn net.Conn) error {
 		}
 
 		//route
+		ready, err = mercury.router.Ready(buf[0:recved])
+		if err != nil {
+			Warn("request ready route failed")
+			return err
+		} else if false == ready {
+			needRecv = true
+			continue
+		}
+
 		workerName, err = mercury.router.Route(buf[0:recved])
 		if err != nil {
 			Warn("request route failed")
