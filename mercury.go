@@ -81,6 +81,7 @@ func Run() error {
 		Info("start timer : %s", name)
 		go func(t Timer) {
 			cycle := time.Duration(uint64(t.GetCycle()) * 1000 * 1000)
+			t.Process()
 			ticker := time.NewTicker(cycle)
 			for _ = range ticker.C {
 				err := t.Process()

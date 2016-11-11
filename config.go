@@ -105,11 +105,10 @@ func (config *MercuryConfig) ParseConfig(configPath string) error {
 	config.reserved = make(map[string]string)
 	buf := bufio.NewReader(handler)
 	section := ""
-	for {
-		line, err := buf.ReadString('\n')
-		if err == io.EOF {
-			break
-		} else if err != nil {
+	line := ""
+	for err != io.EOF {
+		line, err = buf.ReadString('\n')
+		if err != nil && err != io.EOF {
 			Fatal("read conf from mercury.conf failed, err=%s", err.Error())
 			return err
 		}
@@ -128,6 +127,7 @@ func (config *MercuryConfig) ParseConfig(configPath string) error {
 				config.reserved[section+"."+strings.TrimSpace(line[0:idx])] = strings.TrimSpace(line[idx+1:])
 			}
 		}
+
 	}
 
 	return nil
