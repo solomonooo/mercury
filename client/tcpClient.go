@@ -60,6 +60,8 @@ func (client *TcpClient) Send(req []byte, check func([]byte) (int, error)) ([]by
 	client.conn.SetWriteDeadline(time.Now().Add(timeout))
 	client.conn.SetReadDeadline(time.Now().Add(timeout))
 
+	mercury.Debug("logid[%d] timeout[%v] time[%s]", client.Reqid, timeout, time.Now().Add(timeout).Format("2006-01-02 15:04:05"))
+
 	//send
 	ret, err := client.conn.Write(req)
 	if nil != err {
