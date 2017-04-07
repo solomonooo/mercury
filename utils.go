@@ -27,6 +27,8 @@ func RecvReq(conn net.Conn, data []byte) (int, error) {
 	ret, err := conn.Read(data)
 	if err == io.EOF {
 		Debug("client close, remote[%s]", conn.RemoteAddr().String())
+	} else if oe, ok := err.(*net.OpError); ok && oe.Timeout() {
+		Debug("client timeout, remote[%s]", conn.RemoteAddr().String())
 	} else if err != nil {
 		Warn("recv req error, remote:%s, err:%s", conn.RemoteAddr().String(), err.Error())
 		return ret, err

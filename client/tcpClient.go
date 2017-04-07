@@ -7,6 +7,7 @@ package client
 import (
 	"fmt"
 	"github.com/solomonooo/mercury"
+	"gopkg.in/fatih/pool.v2"
 	"net"
 	"time"
 )
@@ -42,6 +43,26 @@ func (client *TcpClient) Init(Reqid uint64, ip string, port uint32, timeout uint
 	client.buff = make([]byte, BUFF_SIZE)
 	client.recved = 0
 	return nil
+}
+
+func (client *TcpClient) InitWithPool(Reqid uint64, p pool.Pool, timeout uint32) error {
+	var err error
+	client.Reqid = Reqid
+	client.timeout = timeout
+	client.conn, err = p.Get()
+	if err != nil {
+		mercury.Warn("logid[%d] connect to server failed, err[%s]", Reqid, err.Error())
+		return mercury.ERR_CLIENT_CONN
+	}
+	client.buff = make([]byte, BUFF_SIZE)
+	client.recved = 0
+	return nil
+}
+
+func (client *TcpClient) MarkUnusable() {
+	if p, ok := client.conn.(*pool.PoolConn); ok {
+		p.MarkUnusable()
+	}
 }
 
 func (client *TcpClient) Close() {
